@@ -1,0 +1,11 @@
+{
+    "AWSEBDOCKERRUNVERSION": "1",
+    "Image": {
+        "Name": "767397918923.dkr.ecr.us-east-2.amazonaws.com/coursenodemysql:latest"
+    },
+    "Ports": [
+        {
+            "ContainerPort": 80
+        }
+    ]
+}

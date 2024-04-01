@@ -1,0 +1,30 @@
+version: 0.2
+
+phases:
+  pre_build:
+      commands:
+          - echo Logging into AWS ECR # mensaje del proceso para el acceso a ECR AWS
+          - aws --version # identificación de la versión de aws
+          - REPOSITORY_URI=767397918923.dkr.ecr.us-east-2.amazonaws.com/coursenodemysql #identificador del path de la imagen en el repo del ECR
+          - aws ecr get-login-password | docker login --username AWS --password-stdin ${REPOSITORY_URI} # Aca me autentico de cara al ECR
+          - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7) #Imprime el commit en el flujo de CI/CD y le agrega un identificador de proceso
+          - IMAGE_TAG=$(COMMIT_HASH:=lastest) # Cual es el tag que le daremos dar a la imagen
+
+      build:
+        commands:
+            - echo Build started on `date` # Aqui ocupamos la función de fecha del code build
+            - echo Building the docker image # Mensaje de construcción de la imagen de docker
+            - docker build -t $REPOSITORY_URI:latest . #construcción de la imagen mediante el Dockerfile
+            # referencia de variables de entorno de manera dinamica
+            - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG # crea una copia de la imagen a partir de la imagen actual como respaldo
+
+      post_build:
+          commands:
+              - echo Build completed on `date` # Aqui ocupamos la funcion de fecha de finalizacion del build
+              - echo Pushing the docker image # Vamos a subir la imagen de docker
+              - docker push $REPOSITORY_URI:latest # subo la imagen al repositorio
+              - docker push $REPOSITORY_URI:$IMAGE_TAG # subo la imagen de respaldo al repositorio
+
+      artifacts:
+        files:
+          - "Dockerrun.aws.json" # archivo adjunto de configuración para generar el contenedor de acuerdo a nuestra imagen
